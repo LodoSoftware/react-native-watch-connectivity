@@ -1,0 +1,62 @@
+name: Release
+on: workflow_dispatch
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16
+          cache: yarn
+
+      - name: Install Dependencies
+        run: yarn --frozen-lockfile
+
+      - name: Lint
+        run: yarn lint .
+
+      - name: Build
+        run: yarn build
+
+  release:
+    needs: [validate]
+    runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          token: ${{ secrets.GRGIT_USER }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "UITeam.D3@ncr.com"
+          git config --global user.name "Cranjis"
+          git fetch --prune --unshallow
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16
+          cache: yarn
+
+      - name: Install Dependencies
+        run: yarn --frozen-lockfile
+
+      - name: Create Release
+        run: yarn release
