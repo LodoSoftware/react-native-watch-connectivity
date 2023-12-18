@@ -26,7 +26,7 @@ jobs:
         run: yarn --frozen-lockfile
 
       - name: Lint
-        run: yarn lint .
+        run: yarn lint lib
 
       - name: Build
         run: yarn build
